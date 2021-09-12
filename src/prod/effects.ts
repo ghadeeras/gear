@@ -1,6 +1,6 @@
 import * as types from "./types.js"
 import { Value } from "./value.js";
-import { invokeLater } from "./utils.js";
+import { invokeLater } from "./scheduling.js";
 
 export function reduction<T, R>(reducer: types.Reducer<T, R>, identity: R): types.Effect<T, R> {
     const accumulator: [R] = [identity];

@@ -44,18 +44,6 @@ export function circuit<T>(producer: types.Producer<T>, consumer: types.Consumer
     return () => producer(consumer);
 }
 
-export function invokeLater<A extends any[], R>(f: (...args: A) => R, ...args: A): Promise<R> {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            try {
-                resolve(f(...args))
-            } catch (e) {
-                reject(e)
-            }
-        })
-    })
-}
-
 export function htmlElement(id: string): HTMLElement {
     const element = document.getElementById(id)
     if (!element) {

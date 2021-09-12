@@ -12,7 +12,7 @@ export type DraggingPositionMapper<T> = types.Mapper<PointerPosition, T>
 
 export interface DraggingHandler<T> {
 
-    currentValue(): T
+    currentValue(position: PointerPosition, shift: boolean, ctrl: boolean, alt: boolean): T
 
     mapper(value: T, from: PointerPosition, shift: boolean, ctrl: boolean, alt: boolean): DraggingPositionMapper<T>
 
@@ -27,12 +27,12 @@ export function drag<T>(handler: DraggingHandler<T>): types.Effect<Dragging, T> 
 
 class Dragger<T> {
 
-    private mapper: DraggingPositionMapper<T> = () => this.handler.currentValue()
+    private mapper: DraggingPositionMapper<T> = position => this.handler.currentValue(position, false, false, false)
 
     constructor(private handler: DraggingHandler<T>) {}
 
     start(position: PointerPosition, shift: boolean, ctrl: boolean, alt: boolean): T {
-        const initialValue = this.handler.currentValue()
+        const initialValue = this.handler.currentValue(position, shift, ctrl, alt)
         this.mapper = this.handler.mapper(initialValue, position, shift, ctrl, alt)
         return initialValue
     }
@@ -49,8 +49,8 @@ class Dragger<T> {
 
 export function posIn(e: HTMLElement): types.Mapper<MouseEvent, PointerPosition> {
     return p => [
-        (2 * p.clientX - e.clientWidth) / e.clientWidth, 
-        (e.clientHeight - 2 * p.clientY) / e.clientHeight
+        (2 * p.offsetX - e.clientWidth) / e.clientWidth, 
+        (e.clientHeight - 2 * p.offsetY) / e.clientHeight
     ]
 }
 
@@ -83,6 +83,9 @@ export class ElementEvents {
     readonly pointerButtons: Source<MouseButtons> = this.newPointerButtons()
 
     constructor(readonly element: HTMLElement) {
+        element.ontouchstart = trapping(() => {})
+        element.ontouchmove = trapping(() => {})
+        element.ontouchend = trapping(() => {})
     }
 
     parent() {
@@ -109,7 +112,7 @@ export class ElementEvents {
             this.pointerDown.value.map(e => this.startDragging(isDragging, e)),
             this.pointerMove.value.filter(e => (e.buttons & 1) != 0).map(e => this.drag(e)),
             Value.from(
-                this.pointerMove.value.filter(e => (e.buttons & 1) == 0 && !isDragging[0]),
+                this.pointerMove.value.filter(e => (e.buttons & 1) == 0 && isDragging[0]),
                 this.pointerUp.value 
             ).map(e => this.endDragging(isDragging, e))
         ))

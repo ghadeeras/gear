@@ -1,5 +1,6 @@
 import * as effects from "./effects.js";
 import * as lazy from "./lazy.js";
+import * as scheduling from "./scheduling.js";
 import * as types from "./types.js";
 import * as utils from "./utils.js";
 
@@ -10,7 +11,7 @@ export class Value<T> {
     private compositeConsumer: types.Consumer<T> = () => {}
 
     constructor(producer: types.Producer<T>) {
-        utils.invokeLater(() => producer(value => this.compositeConsumer(value)))
+        scheduling.invokeLater(() => producer(value => this.compositeConsumer(value)))
     }
 
     attach(consumer: types.Consumer<T>) {

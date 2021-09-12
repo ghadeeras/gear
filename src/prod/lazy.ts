@@ -1,6 +1,6 @@
 import { Supplier } from "./types.js"
 
-class Lazy<T> {
+export class Lazy<T> {
 
     private _value: T | null = null;
 
@@ -14,9 +14,17 @@ class Lazy<T> {
         return this._value;
     }
 
+    refresh() {
+        this._value = null
+    }
+
+    asSupplier(): Supplier<T> {
+        return () => this.get()
+    }
+
 }
 
 export function lazy<T>(constructor: Supplier<T>): Supplier<T> {
     let lazy = new Lazy(constructor);
-    return () => lazy.get();
+    return lazy.asSupplier();
 }
