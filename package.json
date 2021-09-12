@@ -1,0 +1,37 @@
+{
+  "name": "gear",
+  "version": "1.0.0",
+  "description": "A library comprising miscellaneous utilities mainly aimed at facilitating UI and IO functionalities.",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "nyc --reporter=html -- mocha --require esm --recursive \"./root/gear/test/**/*.test.js\"",
+    "pretest": "tsc --sourceMap false --declarationMap false"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ghadeeras/gear.git"
+  },
+  "keywords": [
+    "UI",
+    "IO",
+    "utilities"
+  ],
+  "author": "Ghadeer Abou-Saleh",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/ghadeeras/gear/issues"
+  },
+  "homepage": "https://github.com/ghadeeras/gear#readme",
+  "devDependencies": {
+    "@types/chai": "^4.2.14",
+    "@types/mocha": "^8.2.0",
+    "@types/seedrandom": "^3.0.1",
+    "chai": "^4.3.0",
+    "esm": "^3.2.25",
+    "mocha": "^8.2.1",
+    "nyc": "^15.1.0",
+    "seedrandom": "^3.0.5",
+    "source-map-support": "^0.5.19"
+  }
+}
