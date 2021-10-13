@@ -10,8 +10,14 @@ export class Value<T> {
 
     private compositeConsumer: types.Consumer<T> = () => {}
 
-    constructor(producer: types.Producer<T>) {
-        scheduling.invokeLater(() => producer(value => this.compositeConsumer(value)))
+    constructor(producer: types.Producer<T> | null = null) {
+        if (producer) {
+            scheduling.invokeLater(() => producer(value => this.compositeConsumer(value)))
+        }
+    }
+
+    flow(value: T) {
+        this.compositeConsumer(value)
     }
 
     attach(consumer: types.Consumer<T>) {
@@ -48,6 +54,13 @@ export class Value<T> {
         return this.then(effects.latency())
     }
 
+    switch<V extends Record<string, Value<T>>>(controller: Value<string>, values: V) {
+        const noOp = new Value<T>();
+        const selectedValue: [Value<T>] = [noOp]
+        controller.attach(key => selectedValue[0] = values[key] ?? noOp)
+        this.attach(value => selectedValue[0].flow(value))
+    }
+    
     static from<T>(...values: Value<T>[]): Value<T> {
         return new Value(consumer => {
             for (const value of values) {
@@ -109,6 +122,27 @@ export class Target<T> {
         }
     }
 
+}
+
+export function sourceSwitch<V, S extends Record<string, Value<V>>>(controller: Value<string>, sources: S): Value<V> {
+    const selectedSource: [string | null] = [null]
+    controller.attach(key => selectedSource[0] = key)
+    return new Value(consumer => {
+        for (const key in sources) {
+            sources[key].filter(value => selectedSource[0] === key).attach(consumer)
+        }
+    })
+}
+
+export function targetSwitch<V, T extends Record<string, Target<V>>>(controller: Value<string>, targets: T): Target<V> {
+    const noOp = () => { };
+    const selectedTarget: [types.Consumer<V>] = [noOp]
+    const consumers: Partial<Record<string, types.Consumer<V>>> = {}
+    for (const key in targets) {
+        targets[key].value = new Value(c => consumers[key] = c)
+    }
+    controller.attach(key => selectedTarget[0] = consumers[key] ?? noOp)
+    return new Target(value => selectedTarget[0](value))
 }
 
 export function bind<T, K extends keyof T, V extends T[K]>(target: T, key: K, value: Value<V>) {
