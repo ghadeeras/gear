@@ -20,9 +20,10 @@ export class Value<T> {
         this.compositeConsumer(value)
     }
 
-    attach(consumer: types.Consumer<T>) {
+    attach(consumer: types.Consumer<T>): Value<T> {
         this.consumers.push(consumer)
         this.compositeConsumer = utils.compositeConsumer(...this.consumers)
+        return this
     }
 
     defaultsTo(value: T): Value<T> {
@@ -38,27 +39,28 @@ export class Value<T> {
         })
     }
 
-    map<R>(mapper: types.Mapper<T, R>) {
+    map<R>(mapper: types.Mapper<T, R>): Value<R> {
         return this.then(effects.mapping(mapper))
     }
 
-    reduce<R>(reducer: types.Reducer<T, R>, identity: R) {
+    reduce<R>(reducer: types.Reducer<T, R>, identity: R): Value<R> {
         return this.then(effects.reduction(reducer, identity))
     }
 
-    filter(predicate: types.Predicate<T>) {
+    filter(predicate: types.Predicate<T>): Value<T> {
         return this.then(effects.filtering(predicate))
     }
 
-    later() {
+    later(): Value<T> {
         return this.then(effects.latency())
     }
 
-    switch<V extends Record<string, Value<T>>>(controller: Value<string>, values: V) {
+    switch<V extends Record<string, Value<T>>>(controller: Value<string>, values: V): Value<T> {
         const noOp = new Value<T>();
         const selectedValue: [Value<T>] = [noOp]
         controller.attach(key => selectedValue[0] = values[key] ?? noOp)
         this.attach(value => selectedValue[0].flow(value))
+        return this
     }
     
     static from<T>(...values: Value<T>[]): Value<T> {
