@@ -12,7 +12,7 @@ export class Value<T> {
 
     constructor(producer: types.Producer<T> | null = null) {
         if (producer) {
-            scheduling.invokeLater(() => producer(value => this.compositeConsumer(value)))
+            producer(value => this.compositeConsumer(value))
         }
     }
 
@@ -29,7 +29,9 @@ export class Value<T> {
     defaultsTo(value: T): Value<T> {
         return new Value(consumer => {
             this.attach(consumer)
-            consumer(value)
+            scheduling.invokeLater(() => {
+                consumer(value)
+            })
         })
     }
 
@@ -44,7 +46,7 @@ export class Value<T> {
     }
 
     reduce<R>(reducer: types.Reducer<T, R>, identity: R): Value<R> {
-        return this.then(effects.reduction(reducer, identity))
+        return this.then(effects.reduction(reducer, identity)).defaultsTo(identity)
     }
 
     filter(predicate: types.Predicate<T>): Value<T> {
