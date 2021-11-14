@@ -109,11 +109,11 @@ export class ElementEvents {
     private newDragging(): Source<Dragging> {
         const isDragging: [boolean] = [false]
         return new Source(() => Value.from(
-            this.pointerDown.value.map(e => this.startDragging(isDragging, e)),
-            this.pointerMove.value.filter(e => (e.buttons & 1) != 0).map(e => this.drag(e)),
+            this.pointerDown.value.filter(() => !isDragging[0]).map(e => this.startDragging(isDragging, e)),
+            this.pointerMove.value.filter(e => (e.buttons & 1) != 0 && isDragging[0]).map(e => this.drag(e)),
             Value.from(
                 this.pointerMove.value.filter(e => (e.buttons & 1) == 0 && isDragging[0]),
-                this.pointerUp.value 
+                this.pointerUp.value.filter(() => isDragging[0])
             ).map(e => this.endDragging(isDragging, e))
         ))
     }
