@@ -1,4 +1,4 @@
-import { trap } from "./index.js"
+import { trap } from "../utils.js"
 import { Key } from './button.js'
 import { Consumer } from "../types.js"
 

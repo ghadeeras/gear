@@ -2,7 +2,8 @@ import { Button, ButtonInterface, VirtualKey } from './button.js'
 import { Keyboard, KeyboardEventContext } from './keyboard.js';
 import { DraggingTarget, Pointer, PointerInterface } from './pointer.js';
 import { CanvasRecorder, CanvasSizeManager } from './canvas.js';
-import { FrequencyMeter, required } from './misc.js';
+import { FrequencyMeter } from './perf.js';
+import { required } from '../utils.js';
 
 export interface Loop {
     run(): void

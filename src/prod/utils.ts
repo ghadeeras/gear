@@ -45,9 +45,28 @@ export function circuit<T>(producer: types.Producer<T>, consumer: types.Consumer
 }
 
 export function htmlElement(id: string): HTMLElement {
-    const element = document.getElementById(id)
-    if (!element) {
-        throw new Error(`Element with id '${id}' was not found!'`)
+    return required(document.getElementById(id), () => `Element with id '${id}' was not found!'`)
+}
+
+export function required<T>(value: T | null | undefined, message = () => `Required value is ${value}!`): T {
+    return value === null || value === undefined
+        ? error(message())
+        : value
+}
+
+export function error<T>(message: string): T {
+    throw new Error(message)
+}
+
+export function property<T, K extends keyof T>(object: T, key: K): types.Property<T[K]> {
+    return {
+        getter: () => object[key],
+        setter: value => object[key] = value
     }
-    return element 
+}
+
+export function trap(e: UIEvent) {
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    e.stopPropagation()
 }

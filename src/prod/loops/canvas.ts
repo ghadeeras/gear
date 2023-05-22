@@ -1,5 +1,5 @@
 import { DeferredComputation } from "../scheduling.js";
-import { save } from "./misc.js";
+import { save } from "../files.js";
 
 export class CanvasSizeManager {
 

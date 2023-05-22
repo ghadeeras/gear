@@ -22,3 +22,8 @@ export type Contains<K extends Key, V> = {
 }
 
 export type EventHandler<E> = ((event: E) => any) | null
+
+export type Property<V> = {
+    getter: () => V
+    setter: (value: V) => void
+}

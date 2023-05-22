@@ -1,9 +1,8 @@
-import { required } from "./misc.js"
+import { required, trap } from "../utils.js"
 
 import { ButtonInterface, PointerButton } from './button.js'
-import { Property, trap } from './index.js'
 import { PointerPosition } from "../ui.input.js"
-import { Consumer } from "../types.js"
+import { Consumer, Property } from "../types.js"
 
 export interface PointerInterface {
 

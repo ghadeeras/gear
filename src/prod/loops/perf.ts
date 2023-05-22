@@ -1,23 +1,3 @@
-export function required<T>(value: T | null | undefined): T {
-    if (value === null || value === undefined) {
-        throw new Error(`Required value is ${value}!`)
-    }
-    return value
-}
-
-export function error<T>(message: string): T {
-    throw new Error(message)
-}
-
-export function save(url: string, contentType: string, fileName: string) {
-    const anchor = document.createElement("a")
-    anchor.href = url
-    anchor.type = contentType
-    anchor.target = '_blank'
-    anchor.download = fileName
-    anchor.click()
-}
-
 export class FrequencyMeter {
 
     private lastReadingTime = 0
@@ -86,26 +66,4 @@ export function throttled(freqInHz: number, logic: () => void): (time?: number) 
             lastTime[0] = t - (elapsed % periodInMilliseconds)
         }
     }
-}
-
-export async function fetchTextFile(url: string): Promise<string> {
-    return fetch(url, { method : "get", mode : "no-cors" }).then(response => response.text());
-}
-
-export type Property<V> = {
-    getter: () => V
-    setter: (value: V) => void
-}
-
-export function property<T, K extends keyof T>(object: T, key: K): Property<T[K]> {
-    return {
-        getter: () => object[key],
-        setter: value => object[key] = value
-    }
-}
-
-export function trap(e: UIEvent) {
-    e.preventDefault()
-    e.stopImmediatePropagation()
-    e.stopPropagation()
 }

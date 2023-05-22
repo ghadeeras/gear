@@ -153,9 +153,7 @@ export class ElementEvents {
 
 function trapping<E extends UIEvent>(consumer: types.Consumer<E>): types.Consumer<E> {
     return e => {
-        e.preventDefault()
-        e.stopImmediatePropagation()
-        e.stopPropagation()
+        utils.trap(e)
         consumer(e)
     }
 }

@@ -1,5 +1,5 @@
-import { Consumer } from '../types.js'
-import { Property, trap } from './index.js'
+import { Consumer, Property } from '../types.js'
+import { trap } from '../utils.js'
 
 export interface ButtonInterface {
 
