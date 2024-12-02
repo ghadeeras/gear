@@ -1,5 +1,7 @@
 .nyc_output
 coverage
 node_modules
-root
+out
+lib
 tsconfig.tsbuildinfo
+gear-*.tgz
