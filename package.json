@@ -1,13 +1,19 @@
 {
   "name": "gear",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A library comprising miscellaneous utilities mainly aimed at facilitating UI and IO functionalities.",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "test": "nyc --reporter=html -- mocha --recursive \"./root/gear/test/**/*.test.js\"",
-    "pretest": "tsc --sourceMap false --declarationMap false"
+  "exports": {
+    ".": "./lib/index.js"
   },
+  "type": "module",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "clean": "node ./scripts/clean.js",
+    "prepare": "npm run clean && npx tsc --project ./tsconfig.prepare.json && node ./scripts/finalize.js",
+    "pretest": "npm run clean && npx tsc",
+    "test": "nyc --reporter=html -- mocha --recursive \"./out/test/**/*.test.js\""  },
   "repository": {
     "type": "git",
     "url": "https://github.com/ghadeeras/gear.git"
@@ -31,6 +37,7 @@
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
     "seedrandom": "^3.0.5",
-    "source-map-support": "^0.5.21"
+    "source-map-support": "^0.5.21",
+    "typescript": "5.7.2"
   }
 }
