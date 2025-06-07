@@ -27,3 +27,6 @@ export type Property<V> = {
     getter: () => V
     setter: (value: V) => void
 }
+
+export type Tuple = [] | TupleConcat<any, any> 
+export type TupleConcat<H, T extends Tuple> = [H, ...T]
