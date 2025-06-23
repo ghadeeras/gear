@@ -1,8 +1,9 @@
 import { required, trap } from "../utils.js"
 
 import { ButtonInterface, PointerButton } from './button.js'
-import { PointerPosition } from "../ui.input.js"
 import { Consumer, Property } from "../types.js"
+
+export type PointerPosition = [number, number];
 
 export interface PointerInterface {
 

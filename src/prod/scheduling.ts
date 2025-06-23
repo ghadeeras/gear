@@ -31,6 +31,10 @@ export class DeferredComputation<R> {
 
 }
 
+export function later<A extends any[], R>(f: (...args: A) => R): (...args: A) => Promise<R> {
+    return (...args) => invokeLater(f, ...args)
+}
+
 export function invokeLater<A extends any[], R>(f: (...args: A) => R, ...args: A): Promise<R> {
     const computation = new DeferredComputation(() => f(...args))
     return computation.perform()
