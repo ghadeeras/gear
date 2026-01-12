@@ -1,5 +1,6 @@
 import { DeferredComputation } from "../scheduling.js";
 import { save } from "../files.js";
+import { keysOf } from "../utils.js";
 
 export class CanvasSizeManager {
 
@@ -79,35 +80,67 @@ export class CanvasSizeManager {
 
 }
 
+const preferredVideoMimeTypes = {
+    "video/mp4": "video.mp4", 
+    "video/webm": "video.webm"
+}
+
 export class CanvasRecorder {
 
-    readonly videoStream: MediaStream
-    readonly videoRecorder: MediaRecorder
+    private _videoStream: MediaStream | null = null
+    private _videoRecorder: MediaRecorder | null = null
 
     private chunks: Blob[] = []
     private fileName: string = "video.mp4"
     
     constructor(readonly canvas: HTMLCanvasElement) {
-        const bps = 2 ** Math.floor(Math.log2(canvas.width * canvas.height * 24)) // just a heuristic
-        this.videoStream = canvas.captureStream(0)
-        this.videoRecorder = new MediaRecorder(this.videoStream, { audioBitsPerSecond: 0, videoBitsPerSecond: bps, mimeType: "video/webm" })
-        this.videoRecorder.ondataavailable = e => this.chunks.push(e.data)
-        console.log(`Recorder mime type: ${this.videoRecorder.mimeType}`)
-        console.log(`Recorder video bps: ${this.videoRecorder.videoBitsPerSecond}`)
-        this.videoRecorder.onstop = () => {
-            const blob = new Blob(this.chunks)
-            const url = URL.createObjectURL(blob)
-            save(url, this.videoRecorder.mimeType, this.fileName)
-            this.chunks = []
+    }
+
+    private init(): [MediaRecorder, MediaStream] {
+        const bps = 2 ** Math.floor(Math.log2(this.canvas.width * this.canvas.height * 24)); // just a heuristic
+        const videoStream = this.canvas.captureStream();
+        const videoRecorder = this.newVideoRecorder(videoStream, bps);
+        videoRecorder.ondataavailable = e => this.chunks.push(e.data);
+        console.log(`Recorder mime type: ${videoRecorder.mimeType}`);
+        console.log(`Recorder video bps: ${videoRecorder.videoBitsPerSecond}`);
+        videoRecorder.onstop = () => {
+            const blob = new Blob(this.chunks);
+            const url = URL.createObjectURL(blob);
+            save(url, videoRecorder.mimeType, this.fileName);
+            this.chunks = [];
         }
+        return [this._videoRecorder, this._videoStream] = [videoRecorder, videoStream]
     }
 
-    get state() {
-        return this.videoRecorder.state
+    private newVideoRecorder(videoStream: MediaStream, bps: number) {
+        let videoRecorder: MediaRecorder | null = null;
+        for (const mimeType of keysOf(preferredVideoMimeTypes)) {
+            videoRecorder = MediaRecorder.isTypeSupported(mimeType) 
+                ? new MediaRecorder(videoStream, { audioBitsPerSecond: 0, videoBitsPerSecond: bps, mimeType }) 
+                : null;
+            if (videoRecorder !== null) {
+                console.info("Supported video recording mime type: " + mimeType)
+                this.fileName = preferredVideoMimeTypes[mimeType];
+                return videoRecorder;
+            }
+        }
+        throw new Error("Preferred video mime types are not supported: " + Object.keys(preferredVideoMimeTypes));
     }
 
-    startStop(fileName: string = "video.mp4") {
-        if (this.videoRecorder.state === "recording") {
+    get videoStream() {
+        return this._videoStream
+    }
+
+    get videoRecorder() {
+        return this._videoRecorder
+    }
+
+    get state(): RecordingState {
+        return this.videoRecorder?.state ?? "inactive"
+    }
+
+    startStop(fileName: string = this.fileName) {
+        if (this.state === "recording") {
             this.stop(fileName)
         } else {
             this.start()
@@ -115,20 +148,17 @@ export class CanvasRecorder {
     }
 
     start() {
-        this.videoRecorder.start()
+        if (this.state !== "recording") {
+            const [vr, _] = this.init()
+            vr.start()
+        }
     }
 
-    stop(fileName: string = "video.mp4") {
-        this.fileName = fileName
-        this.videoRecorder.stop()
-    }
-
-    requestFrame() {
-        if (this.videoRecorder.state === "recording") {
-            const track = this.videoStream.getVideoTracks()[0]
-            if (track instanceof CanvasCaptureMediaStreamTrack) {
-                track.requestFrame()
-            }
+    stop(fileName: string = this.fileName) {
+        if (this.state === "recording") {
+            this.fileName = fileName
+            this.videoRecorder?.stop();
+            [this._videoRecorder, this._videoStream] = [null, null]
         }
     }
 

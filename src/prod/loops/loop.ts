@@ -302,10 +302,6 @@ class LoopImpl<D extends LoopDescriptor, L extends LoopLogic<D>> implements Loop
                 this.loopLogic.animate(time, delta, this)
             }
             this.render()
-            for (const key of Object.keys(this.canvases)) {
-                const canvas = this.canvases[key]
-                canvas.recorder.requestFrame() 
-            }
             if (this === LoopImpl.activeLoop) {
                 this.nextFrame()
             }

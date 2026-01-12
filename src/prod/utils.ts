@@ -70,3 +70,7 @@ export function trap(e: UIEvent) {
     e.stopImmediatePropagation()
     e.stopPropagation()
 }
+
+export function keysOf<T extends object>(o: T): (keyof T)[] {
+    return Object.keys(o) as (keyof T)[]
+}
