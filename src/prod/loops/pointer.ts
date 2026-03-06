@@ -157,18 +157,17 @@ export type DraggingFunction<T> = (position: PointerPosition) => T
 
 class GenericDraggingTarget<T> implements DraggingTarget {
     
-    private initial: T
     private drag: (pointer: Pointer) => void = () => {}
     private done: () => void = () => {}
 
     constructor(private property: Property<T>, private dragger: Dragger<T>) {
-        this.initial = property.getter()
     }
 
     startDragging(pointer: Pointer) {
-        this.initial = this.property.getter()
-        const draggingFunction = this.dragger.begin(this.initial, pointer.position)
-        this.drag = (pointer) => this.property.setter(draggingFunction(pointer.position))
+        const initial = this.property.getter()
+        const draggingFunction = this.dragger.begin(initial, pointer.position)
+        this.drag = pointer => this.property.setter(draggingFunction(pointer.position))
+        this.drag(pointer)
         this.done = () => this.property.setter(this.dragger.end(this.property.getter()))
     }
 
