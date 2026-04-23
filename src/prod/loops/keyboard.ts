@@ -64,6 +64,9 @@ export class Keyboard implements KeyboardEventContext {
     }
 
     private keyUsed(e: KeyboardEvent, pressed: boolean) {
+        if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
+            return
+        }
         this._repeat = e.repeat
         this._shift = e.shiftKey
         this._ctrl = e.ctrlKey
