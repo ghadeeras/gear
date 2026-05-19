@@ -35,6 +35,7 @@ export class Keyboard implements KeyboardEventContext {
     }
 
     use() {
+        window.onblur = () => this.releaseAllKeys()
         window.onkeydown = this.onkeydown
         window.onkeyup = this.onkeyup
     }
@@ -65,6 +66,7 @@ export class Keyboard implements KeyboardEventContext {
 
     private keyUsed(e: KeyboardEvent, pressed: boolean) {
         if (document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement) {
+            this.releaseAllKeys()
             return
         }
         this._repeat = e.repeat
@@ -75,12 +77,21 @@ export class Keyboard implements KeyboardEventContext {
         const key = this.keys.get(e.code)
         if (key !== undefined) {
             trap(e)
-            this.updatePressedCount(e, pressed, key.pressed)
+            this.updatePressedCount(pressed, key.pressed)
             key.pressed = pressed
         }
     }
 
-    private updatePressedCount(e: KeyboardEvent, pressed: boolean, wasPressed: boolean) {
+    private releaseAllKeys() {
+        if (this.pressedCount > 0) {
+            for (const key of this.keys.values()) {
+                this.updatePressedCount(false, key.pressed)
+                key.pressed = false
+            }
+        }
+    }
+
+    private updatePressedCount(pressed: boolean, wasPressed: boolean) {
         if (pressed !== wasPressed) {
             this._pressedCount = Math.max(this._pressedCount + (pressed ? 1 : -1), 0)
         }
