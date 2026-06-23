@@ -55,6 +55,7 @@ export class FileSelector<M extends boolean> {
 
     public async select(): Promise<FileSelectorOutput<M>> {
         return new Promise(resolve => {
+            this.input.value = ''
             this.input.onchange = () => resolve(this.files())
             this.input.click()
         })
