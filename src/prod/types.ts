@@ -30,3 +30,8 @@ export type Property<V> = {
 
 export type Tuple = [] | TupleConcat<any, any> 
 export type TupleConcat<H, T extends Tuple> = [H, ...T]
+
+export type ValueOf<T> = T[keyof T]
+export type FilteredKeyOf<T, F> = ValueOf<{
+    [k in keyof T]: T[k] extends F ? k : never
+}>

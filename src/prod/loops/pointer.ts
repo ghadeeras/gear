@@ -1,7 +1,7 @@
 import { required, trap } from "../utils.js"
 
 import { ButtonInterface, PointerButton } from './button.js'
-import { Consumer, Property } from "../types.js"
+import { Consumer, FilteredKeyOf, Property } from "../types.js"
 
 export type PointerPosition = [number, number];
 
@@ -14,6 +14,9 @@ export interface PointerInterface {
     readonly x: number 
     readonly y: number
     readonly position: PointerPosition
+    readonly pixelViewPosition: PointerPosition
+    readonly innerViewPosition: PointerPosition
+    readonly outerViewPosition: PointerPosition
 
     draggingTarget: DraggingTarget | null
 
@@ -23,8 +26,10 @@ export class Pointer implements PointerInterface {
 
     readonly element: HTMLElement
 
-    private _x = 0
-    private _y = 0
+    private _position: PointerPosition = [0, 0]
+    private _pixelViewPosition: PointerPosition = [0, 0]
+    private _innerViewPosition: PointerPosition = [0, 0]
+    private _outerViewPosition: PointerPosition = [0, 0]
 
     readonly primary: PointerButton = new PointerButton("primary")
     readonly secondary: PointerButton = new PointerButton("secondary")
@@ -84,15 +89,27 @@ export class Pointer implements PointerInterface {
     }
 
     get x() {
-        return this._x
+        return this._position[0]
     }
 
     get y() {
-        return this._y
+        return this._position[1]
     }
 
     get position(): PointerPosition {
-        return [this._x, this._y]
+        return this._position
+    }
+
+    get pixelViewPosition(): PointerPosition {
+        return this._pixelViewPosition
+    }
+
+    get innerViewPosition(): PointerPosition {
+        return this._innerViewPosition
+    }
+
+    get outerViewPosition(): PointerPosition {
+        return this._outerViewPosition
     }
 
     private pointerMoved(e: PointerEvent) {
@@ -130,10 +147,17 @@ export class Pointer implements PointerInterface {
     }
 
     private updatePositionFrom(e: PointerEvent) {
-        [this._x, this._y] = [
-            2 * e.offsetX / this.element.clientWidth - 1, 
-            1 - 2 * e.offsetY / this.element.clientHeight
-        ]
+        const invW = 1 / this.element.clientWidth
+        const invH = 1 / this.element.clientHeight
+        const invMin = Math.max(invW, invH)
+        const invMax = Math.min(invW, invH)
+        const x = 2 * e.offsetX - this.element.clientWidth
+        const y = this.element.clientHeight - 2 * e.offsetY
+
+        this._position          = [x * invW  , y * invH  ]
+        this._innerViewPosition = [x * invMin, y * invMin]
+        this._outerViewPosition = [x * invMax, y * invMax]
+        this._pixelViewPosition = [e.offsetX , e.offsetY ]
     }
 
 }
@@ -142,10 +166,11 @@ export interface DraggingTarget {
     startDragging(pointer: Pointer): void
     keepDragging(pointer: Pointer): void
     stopDragging(): void
+    abortDragging(): void
 }
 
-export function draggingTarget<V>(property: Property<V>, dragger: Dragger<V>): DraggingTarget {
-    return new GenericDraggingTarget(property, dragger)
+export function draggingTarget<V>(property: Property<V>, dragger: Dragger<V>, positionType: FilteredKeyOf<PointerInterface, PointerPosition> = "position"): DraggingTarget {
+    return new GenericDraggingTarget(property, dragger, positionType)
 }
 
 export interface Dragger<T> {
@@ -159,16 +184,19 @@ class GenericDraggingTarget<T> implements DraggingTarget {
     
     private drag: (pointer: Pointer) => void = () => {}
     private done: () => void = () => {}
+    private abort: () => void = () => {}
 
-    constructor(private property: Property<T>, private dragger: Dragger<T>) {
+    constructor(private property: Property<T>, private dragger: Dragger<T>, private positionType: FilteredKeyOf<PointerInterface, PointerPosition>) {
     }
 
     startDragging(pointer: Pointer) {
         const initial = this.property.getter()
-        const draggingFunction = this.dragger.begin(initial, pointer.position)
-        this.drag = pointer => this.property.setter(draggingFunction(pointer.position))
+        let latest = initial
+        const draggingFunction = this.dragger.begin(initial, pointer[this.positionType])
+        this.drag = pointer => this.property.setter(latest = draggingFunction(pointer[this.positionType]))
         this.drag(pointer)
-        this.done = () => this.property.setter(this.dragger.end(this.property.getter()))
+        this.done = () => this.property.setter(this.dragger.end(latest))
+        this.abort = () => this.property.setter(initial)
     }
 
     keepDragging(pointer: Pointer) {
@@ -177,8 +205,18 @@ class GenericDraggingTarget<T> implements DraggingTarget {
     
     stopDragging() {
         this.done()
-        this.drag = () => {}
-        this.done = () => {}
+        this.reset()
+    }
+
+    abortDragging(): void {
+        this.abort()
+        this.reset()
+    }
+
+    private reset() {
+        this.drag = () => {};
+        this.done = () => {};
+        this.abort = () => {};
     }
 
 }
